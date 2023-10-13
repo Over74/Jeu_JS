@@ -1,53 +1,65 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Constantes du jeu
+const GAME_WIDTH = canvas.width;
+const GAME_HEIGHT = canvas.height;
+const PLAYER_SIZE = 50;
+
 // Vaisseau du joueur
 const player = {
-    x: canvas.width / 2 - 25,
-    y: canvas.height - 50,
-    width: 50,
-    height: 50,
+    x: GAME_WIDTH / 2 - PLAYER_SIZE / 2,
+    y: GAME_HEIGHT - PLAYER_SIZE,
+    width: PLAYER_SIZE,
+    height: PLAYER_SIZE,
     speed: 5,
 };
 
+// Informations du jeu
+let currentLevel = 1;
+let currentStage = 1;
+let score = 0;
+
 // Tableau d'ennemis
-const enemies = [
-    { x: 100, y: 50, width: 50, height: 50 },
-    { x: 250, y: 50, width: 50, height: 50 },
-    { x: 400, y: 50, width: 50, height: 50 },
-];
+const enemies = [];
+const MAX_ENEMIES = 5; // Max d'ennemis à l'écran
+const ENEMY_SIZE = 50;
+let enemySpeed = 1;
 
-// Lasers du joueur
-const playerLasers = [];
+// Durée d'un stage
+const STAGE_DURATION = 5000; // 5 secondes
 
-// Lasers ennemis
-const enemyLasers = [];
+// Durée pour monter d'un niveau
+const LEVEL_UP_DURATION = 15000; // 15 secondes
 
 // Gestion du déplacement du joueur
 function movePlayer(direction) {
     if (direction === 'left' && player.x > 0) {
         player.x -= player.speed;
-    } else if (direction === 'right' && player.x + player.width < canvas.width) {
+    } else if (direction === 'right' && player.x + player.width < GAME_WIDTH) {
         player.x += player.speed;
     }
-}
-
-// Gestion du tir du joueur
-function playerShoot() {
-    const laser = {
-        x: player.x + player.width / 2 - 2.5,
-        y: player.y,
-        width: 5,
-        height: 20,
-        speed: 5,
-    };
-    playerLasers.push(laser);
 }
 
 // Fonction pour dessiner le vaisseau
 function drawPlayer() {
     ctx.fillStyle = 'blue';
     ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+// Fonction pour générer des ennemis
+function spawnEnemies() {
+    if (enemies.length < MAX_ENEMIES) {
+        const enemy = {
+            x: Math.random() * (GAME_WIDTH - ENEMY_SIZE),
+            y: 0,
+            width: ENEMY_SIZE,
+            height: ENEMY_SIZE,
+            speed: enemySpeed,
+            health: 3, // Nombre de coups pour tuer l'ennemi
+        };
+        enemies.push(enemy);
+    }
 }
 
 // Fonction pour dessiner les ennemis
@@ -58,61 +70,36 @@ function drawEnemies() {
     });
 }
 
-// Fonction pour dessiner les lasers
-function drawLasers(lasers, color) {
-    ctx.fillStyle = color;
-    lasers.forEach((laser) => {
-        ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
-    });
-}
-
-// Gestion de la collision entre deux objets
-function isColliding(obj1, obj2) {
-    return (
-        obj1.x < obj2.x + obj2.width &&
-        obj1.x + obj1.width > obj2.x &&
-        obj1.y < obj2.y + obj2.height &&
-        obj1.y + obj1.height > obj2.y
-    );
-}
-
 // Fonction pour mettre à jour le jeu
 function update() {
-    // Déplacement des lasers du joueur
-    playerLasers.forEach((laser) => {
-        laser.y -= laser.speed;
-    });
+    // Gestion du temps écoulé
+    const currentTime = Date.now();
+    if (currentTime >= LEVEL_UP_DURATION * currentLevel) {
+        // Niveau supérieur
+        currentLevel++;
+        currentStage = 1;
+        enemySpeed += 0.5;
+        score += 10;
+    } else if (currentTime >= STAGE_DURATION * currentStage) {
+        // Nouveau stage
+        currentStage++;
+        score += 5;
+    }
 
-    // Déplacement des lasers ennemis
-    enemyLasers.forEach((laser) => {
-        laser.y += laser.speed;
-    });
-
-    // Gestion des collisions entre les lasers du joueur et les ennemis
-    playerLasers.forEach((laser, laserIndex) => {
-        enemies.forEach((enemy, enemyIndex) => {
-            if (isColliding(laser, enemy)) {
-                playerLasers.splice(laserIndex, 1);
-                enemies.splice(enemyIndex, 1);
-            }
-        });
-    });
-
-    // Gestion des collisions entre les lasers ennemis et le joueur
-    enemyLasers.forEach((laser, laserIndex) => {
-        if (isColliding(laser, player)) {
-            enemyLasers.splice(laserIndex, 1);
-            alert("Game Over! Vous avez été touché par un laser ennemi.");
-            document.location.reload();
+    // Déplacement des ennemis
+    enemies.forEach((enemy, index) => {
+        enemy.y += enemy.speed;
+        if (enemy.y > GAME_HEIGHT) {
+            enemies.splice(index, 1);
         }
     });
 
     // Dessiner le jeu
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     drawPlayer();
     drawEnemies();
-    drawLasers(playerLasers, 'blue');
-    drawLasers(enemyLasers, 'red');
+    document.getElementById('levelInfo').textContent = `Niveau ${currentLevel}, Stage ${currentStage}`;
+    document.getElementById('scoreInfo').textContent = `Points: ${score}`;
 
     // Appel de la fonction update à chaque rafraîchissement de la page
     requestAnimationFrame(update);
@@ -124,10 +111,9 @@ window.addEventListener('keydown', (event) => {
         movePlayer('left');
     } else if (event.key === 'ArrowRight') {
         movePlayer('right');
-    } else if (event.key === ' ') {
-        playerShoot();
     }
 });
 
 // Lancer le jeu
+setInterval(spawnEnemies, 1000);
 update();
