@@ -1,1 +1,5 @@
-
+canvas {
+    background-color: black;
+    display: block;
+    margin: 0 auto;
+}
