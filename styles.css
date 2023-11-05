@@ -10,7 +10,7 @@ body {
     border: 10px solid navy; /* Bordure de 10 pixels marine */
     
     margin: 0 auto; 
-    display: flex;
+    display: flex; /* Permet de s'adapter au format de l'écran */
     flex-wrap: wrap;
 }
 
@@ -20,15 +20,15 @@ body {
     margin: 5px; /* Marge de 5 pixels */
 
     /* Cercle */
-    background-color: white;
-    border-radius: 50%;
-    border: 5px solid navy;
+    background-color: white; /* Couleur d'arrière plan */
+    border-radius: 50%; /* Marge entre les cercles */
+    border: 5px solid navy; 
 }
 
 .red-piece {
-    background-color: red;
+    background-color: red; /* couleur de la pièce */
 }
 
 .yellow-piece {
-    background-color: yellow;
+    background-color: yellow; /* couleur de la pièce */
 }
