@@ -1,119 +1,128 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+var playerRed = "R"; /* Joueur rouge*/
+var playerYellow = "Y"; /* Joueur Jaune */
+var currPlayer = playerRed; /* Le joueur rouge joue en premier */
 
-// Constantes du jeu
-const GAME_WIDTH = canvas.width;
-const GAME_HEIGHT = canvas.height;
-const PLAYER_SIZE = 50;
+var gameOver = false;
+var board;
 
-// Vaisseau du joueur
-const player = {
-    x: GAME_WIDTH / 2 - PLAYER_SIZE / 2,
-    y: GAME_HEIGHT - PLAYER_SIZE,
-    width: PLAYER_SIZE,
-    height: PLAYER_SIZE,
-    speed: 5,
-};
+var rows = 6; // 6 lignes
+var columns = 7; // 7 colones
+var currColumns = []; // Garde une trace de la ligne à laquelle se trouve chaque colonne.
 
-// Informations du jeu
-let currentLevel = 1;
-let currentStage = 1;
-let score = 0;
-
-// Tableau d'ennemis
-const enemies = [];
-const MAX_ENEMIES = 5; // Max d'ennemis à l'écran
-const ENEMY_SIZE = 50;
-let enemySpeed = 1;
-
-// Durée d'un stage
-const STAGE_DURATION = 5000; // 5 secondes
-
-// Durée pour monter d'un niveau
-const LEVEL_UP_DURATION = 15000; // 15 secondes
-
-// Gestion du déplacement du joueur
-function movePlayer(direction) {
-    if (direction === 'left' && player.x > 0) {
-        player.x -= player.speed;
-    } else if (direction === 'right' && player.x + player.width < GAME_WIDTH) {
-        player.x += player.speed;
-    }
+window.onload = function() { // Fonction permettant de remplir les cases du tableau
+    setGame();
 }
 
-// Fonction pour dessiner le vaisseau
-function drawPlayer() {
-    ctx.fillStyle = 'blue';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-}
+function setGame() {
+    board = [];
+    currColumns = [5, 5, 5, 5, 5, 5, 5];
 
-// Fonction pour générer des ennemis
-function spawnEnemies() {
-    if (enemies.length < MAX_ENEMIES) {
-        const enemy = {
-            x: Math.random() * (GAME_WIDTH - ENEMY_SIZE),
-            y: 0,
-            width: ENEMY_SIZE,
-            height: ENEMY_SIZE,
-            speed: enemySpeed,
-            health: 3, // Nombre de coups pour tuer l'ennemi
-        };
-        enemies.push(enemy);
-    }
-}
-
-// Fonction pour dessiner les ennemis
-function drawEnemies() {
-    ctx.fillStyle = 'red';
-    enemies.forEach((enemy) => {
-        ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-    });
-}
-
-// Fonction pour mettre à jour le jeu
-function update() {
-    // Gestion du temps écoulé
-    const currentTime = Date.now();
-    if (currentTime >= LEVEL_UP_DURATION * currentLevel) {
-        // Niveau supérieur
-        currentLevel++;
-        currentStage = 1;
-        enemySpeed += 0.5;
-        score += 10;
-    } else if (currentTime >= STAGE_DURATION * currentStage) {
-        // Nouveau stage
-        currentStage++;
-        score += 5;
-    }
-
-    // Déplacement des ennemis
-    enemies.forEach((enemy, index) => {
-        enemy.y += enemy.speed;
-        if (enemy.y > GAME_HEIGHT) {
-            enemies.splice(index, 1);
+    for (let r = 0; r < rows; r++) {
+        let row = [];
+        for (let c = 0; c < columns; c++) {
+            // JS
+            row.push(' ');
+            // HTML
+            let tile = document.createElement("div");
+            tile.id = r.toString() + "-" + c.toString();
+            tile.classList.add("tile");
+            tile.addEventListener("click", setPiece);
+            document.getElementById("board").append(tile);
         }
-    });
-
-    // Dessiner le jeu
-    ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    drawPlayer();
-    drawEnemies();
-    document.getElementById('levelInfo').textContent = `Niveau ${currentLevel}, Stage ${currentStage}`;
-    document.getElementById('scoreInfo').textContent = `Points: ${score}`;
-
-    // Appel de la fonction update à chaque rafraîchissement de la page
-    requestAnimationFrame(update);
+        board.push(row);
+    }
 }
 
-// Gestion des touches du clavier
-window.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowLeft') {
-        movePlayer('left');
-    } else if (event.key === 'ArrowRight') {
-        movePlayer('right');
+function setPiece() {
+    if (gameOver) {
+        return;
     }
-});
 
-// Lancer le jeu
-setInterval(spawnEnemies, 1000);
-update();
+    // Obtenir les coordonnées de la tuile 
+    let coords = this.id.split("-");
+    let r = parseInt(coords[0]);
+    let c = parseInt(coords[1]);
+
+    // figure out which row the current column should be on
+    r = currColumns[c]; 
+
+    if (r < 0) { // board[r][c] != ' '
+        return;
+    }
+
+    board[r][c] = currPlayer; //update JS board
+    let tile = document.getElementById(r.toString() + "-" + c.toString());
+    if (currPlayer == playerRed) {
+        tile.classList.add("red-piece");
+        currPlayer = playerYellow;
+    }
+    else {
+        tile.classList.add("yellow-piece");
+        currPlayer = playerRed;
+    }
+
+    r -= 1; //update the row height for that column
+    currColumns[c] = r; //update the array
+
+    checkWinner();
+}
+
+function checkWinner() {
+     // horizontal
+     for (let r = 0; r < rows; r++) {
+         for (let c = 0; c < columns - 3; c++){
+            if (board[r][c] != ' ') {
+                if (board[r][c] == board[r][c+1] && board[r][c+1] == board[r][c+2] && board[r][c+2] == board[r][c+3]) {
+                    setWinner(r, c);
+                    return;
+                }
+            }
+         }
+    }
+
+    // vertical
+    for (let c = 0; c < columns; c++) {
+        for (let r = 0; r < rows - 3; r++) {
+            if (board[r][c] != ' ') {
+                if (board[r][c] == board[r+1][c] && board[r+1][c] == board[r+2][c] && board[r+2][c] == board[r+3][c]) {
+                    setWinner(r, c);
+                    return;
+                }
+            }
+        }
+    }
+
+    // anti diagonal
+    for (let r = 0; r < rows - 3; r++) {
+        for (let c = 0; c < columns - 3; c++) {
+            if (board[r][c] != ' ') {
+                if (board[r][c] == board[r+1][c+1] && board[r+1][c+1] == board[r+2][c+2] && board[r+2][c+2] == board[r+3][c+3]) {
+                    setWinner(r, c);
+                    return;
+                }
+            }
+        }
+    }
+
+    // diagonal
+    for (let r = 3; r < rows; r++) {
+        for (let c = 0; c < columns - 3; c++) {
+            if (board[r][c] != ' ') {
+                if (board[r][c] == board[r-1][c+1] && board[r-1][c+1] == board[r-2][c+2] && board[r-2][c+2] == board[r-3][c+3]) {
+                    setWinner(r, c);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+function setWinner(r, c) {
+    let winner = document.getElementById("winner");
+    if (board[r][c] == playerRed) {
+        winner.innerText = "Red Wins";             
+    } else {
+        winner.innerText = "Yellow Wins";
+    }
+    gameOver = true;
+}
