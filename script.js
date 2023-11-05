@@ -2,8 +2,8 @@ var playerRed = "R"; /* Joueur rouge*/
 var playerYellow = "Y"; /* Joueur Jaune */
 var currPlayer = playerRed; /* Le joueur rouge joue en premier */
 
-var gameOver = false;
-var board;
+var gameOver = false; // Le jeu n'est pas encore terminé
+var board; // Sert à stocker l'état du plateau de jeu
 
 var rows = 6; // 6 lignes
 var columns = 7; // 7 colones
@@ -13,7 +13,7 @@ window.onload = function() { // Fonction permettant de remplir les cases du tabl
     setGame();
 }
 
-function setGame() {
+function setGame() { // Initalise le plateau de jeu en créant des cases vides
     board = [];
     currColumns = [5, 5, 5, 5, 5, 5, 5];
 
@@ -33,24 +33,24 @@ function setGame() {
     }
 }
 
-function setPiece() {
+function setPiece() { 
     if (gameOver) {
         return;
     }
 
-    // Obtenir les coordonnées de la tuile 
+    // Obtenir les coordonnées de la case
     let coords = this.id.split("-");
     let r = parseInt(coords[0]);
     let c = parseInt(coords[1]);
 
-    // figure out which row the current column should be on
+    // Actualise l'état du plateau en s'assurant que la case la plus basse soit occupé
     r = currColumns[c]; 
 
-    if (r < 0) { // board[r][c] != ' '
+    if (r < 0) {
         return;
     }
 
-    board[r][c] = currPlayer; //update JS board
+    board[r][c] = currPlayer; // Met à jour le tableau pour alterner entre les rouges et les jaunes
     let tile = document.getElementById(r.toString() + "-" + c.toString());
     if (currPlayer == playerRed) {
         tile.classList.add("red-piece");
@@ -61,14 +61,14 @@ function setPiece() {
         currPlayer = playerRed;
     }
 
-    r -= 1; //update the row height for that column
-    currColumns[c] = r; //update the array
+    r -= 1; // met à jour le tableau pour passer à ligne du dessus
+    currColumns[c] = r; // met à jour le tableau
 
     checkWinner();
 }
 
 function checkWinner() {
-     // horizontal
+     // Permet de détecter si 4 pions de même couleur sont alignés horizontalement et déclarer le vainqueur
      for (let r = 0; r < rows; r++) {
          for (let c = 0; c < columns - 3; c++){
             if (board[r][c] != ' ') {
@@ -80,7 +80,7 @@ function checkWinner() {
          }
     }
 
-    // vertical
+    // Permet de détecter si 4 pions de même couleur sont alignés verticalement et déclarer le vainqueur
     for (let c = 0; c < columns; c++) {
         for (let r = 0; r < rows - 3; r++) {
             if (board[r][c] != ' ') {
@@ -92,7 +92,7 @@ function checkWinner() {
         }
     }
 
-    // anti diagonal
+    // Permet de détecter si 4 pions de même couleur sont alignés diagonalement de haut en bas et déclarer le vainqueur
     for (let r = 0; r < rows - 3; r++) {
         for (let c = 0; c < columns - 3; c++) {
             if (board[r][c] != ' ') {
@@ -104,7 +104,7 @@ function checkWinner() {
         }
     }
 
-    // diagonal
+    // Permet de détecter si 4 pions de même couleur sont alignés diagonalement de bas en haut et déclarer le vainqueur
     for (let r = 3; r < rows; r++) {
         for (let c = 0; c < columns - 3; c++) {
             if (board[r][c] != ' ') {
@@ -117,12 +117,12 @@ function checkWinner() {
     }
 }
 
-function setWinner(r, c) {
-    let winner = document.getElementById("winner");
+function setWinner(r, c) { // Affiche le message de victoire lorsque un joueur à gagné
+    let winner = document.getElementById("Vainqueur");
     if (board[r][c] == playerRed) {
-        winner.innerText = "Red Wins";             
+        winner.innerText = "Les rouges ont gagnés";             
     } else {
-        winner.innerText = "Yellow Wins";
+        winner.innerText = "Les jaunes ont gagnés";
     }
     gameOver = true;
 }
